@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Digital - Speedy Lanches</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            padding-bottom: 140px; /* Espaço para o carrinho fixo */
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .cart-indicator {
+            transition: all 0.3s ease;
+        }
+        .cart-indicator.active {
+            transform: scale(1.1);
+            color: #4f46e5;
+        }
+        .fixed-cart {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 340px;
+            max-height: 70vh;
+            z-index: 100;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .cart-header {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .cart-header:hover {
+            background-color: #554edefe;
+        }
+        .cart-content {
+            max-height: 0;
+            overflow-y: auto;
+            transition: max-height 0.4s ease;
+        }
+        .cart-expanded .cart-content {
+            max-height: 300px;
+        }
+        @media (max-width: 640px) {
+            .fixed-cart {
+                width: calc(100% - 40px);
+                right: 20px;
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+
+<div id="app" class="max-w-3xl mx-auto p-4 md:p-6">
+
+    <!-- Cabeçalho -->
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-slate-900">Speedy Lanches</h1>
+        <p class="text-slate-600 mt-2">Sua fome não espera. A gente também não!</p>
+    </header>
+
+    <!-- Seção do Cardápio -->
+    <main id="menu-section" class="space-y-8">
+        <!-- Itens serão inseridos pelo JavaScript -->
+    </main>
+
+    <!-- Seção do Checkout (Oculta) -->
+    <section id="checkout-section" class="hidden fade-in space-y-6">
+        <h2 class="text-2xl font-bold border-b pb-2">Finalizar Pedido</h2>
+        
+        <div id="checkout-cart-summary">
+            <h3 class="text-lg font-semibold mb-2">Seu Pedido</h3>
+            <div id="checkout-cart-items" class="space-y-2"></div>
+            <div class="border-t mt-4 pt-4">
+                <p class="text-right font-bold text-xl">Total: <span id="checkout-total-price">R$ 0,00</span></p>
+            </div>
+        </div>
+
+        <form id="checkout-form" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-slate-700">Nome ou Apelido</label>
+                <input type="text" id="name" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="street" class="block text-sm font-medium text-slate-700">Rua</label>
+                    <input type="text" id="street" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="neighborhood" class="block text-sm font-medium text-slate-700">Bairro</label>
+                    <input type="text" id="neighborhood" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="house-number" class="block text-sm font-medium text-slate-700">Número ou Cor da Casa</label>
+                    <input type="text" id="house-number" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="reference" class="block text-sm font-medium text-slate-700">Ponto de Referência</label>
+                    <input type="text" id="reference" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Forma de Pagamento</h3>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                        <input type="radio" name="payment" value="Dinheiro" class="h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="ml-3 font-medium"><i class="fas fa-money-bill-wave mr-2 text-green-500"></i>Dinheiro</span>
+                    </label>
+                    <div id="troco-div" class="hidden pl-8 mt-2 space-y-2">
+                        <label for="troco" class="block text-sm font-medium text-slate-700">Valor em dinheiro que você vai dar</label>
+                        <input type="text" id="troco" placeholder="Ex: R$ 100,00" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm">
+                        <div id="troco-result" class="hidden bg-green-50 text-green-800 p-2 rounded-md mt-2">
+                            <p class="font-bold">Seu troco será: <span id="troco-value">R$ 0,00</span></p>
+                        </div>
+                    </div>
+                    
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                        <input type="radio" name="payment" value="Cartão na Entrega" class="h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="ml-3 font-medium"><i class="fas fa-credit-card mr-2 text-blue-500"></i>Cartão na Entrega</span>
+                    </label>
+                    <div id="cartao-aviso" class="hidden p-3 bg-blue-50 text-blue-800 rounded-md mt-2 border border-blue-200">
+                        <p class="font-bold"><i class="fas fa-info-circle mr-2"></i>Atenção!</p>
+                        <p class="text-sm mt-1">O cartão será passado no local da entrega. Por favor, tenha seu cartão e documento de identificação à mão.</p>
+                    </div>
+                    
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                        <input type="radio" name="payment" value="PIX" class="h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="ml-3 font-medium"><i class="fab fa-pix mr-2 text-cyan-500"></i>PIX</span>
+                    </label>
+
+                    <div id="pix-details" class="hidden p-4 border-l-4 border-cyan-500 bg-cyan-50 mt-2 rounded-r-lg space-y-3">
+                        <p class="font-semibold text-center">Chave PIX (Telefone): <span>(88) 99448-1903</span></p>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=00020126580014BR.GOV.BCB.PIX01368899448190352040000530398654041.005802BR5925Speedy%20Lanches%20Ltda6009Fortaleza62070503***6304E6E9" alt="QR Code PIX" class="mx-auto my-2 rounded-md">
+                        <div class="text-center bg-yellow-100 border border-yellow-300 text-yellow-800 p-3 rounded-lg">
+                            <p class="font-bold">Envie o comprovante no WhatsApp!</p>
+                            <p class="text-sm mt-1">Seu pedido só será preparado após o envio do comprovante.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+    
+    <!-- Botões de Ação Final (Checkout) -->
+    <div id="final-buttons" class="hidden mt-8 flex flex-col sm:flex-row gap-4">
+        <button id="back-to-menu-btn" class="w-full bg-slate-200 text-slate-800 py-3 rounded-lg font-bold hover:bg-slate-300">
+            <i class="fas fa-arrow-left mr-2"></i> Voltar ao Cardápio
+        </button>
+        <button id="send-order-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700">
+            <i class="fab fa-whatsapp mr-2"></i> Enviar Pedido
+        </button>
+    </div>
+</div>
+
+<!-- Carrinho Fixo no Canto Inferior Direito -->
+<div id="fixed-cart" class="fixed-cart bg-white border border-gray-200 ">
+    <div class="cart-header bg-indigo-600 text-white p-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <i class="fas fa-shopping-cart text-xl mr-2"></i>
+            <h3 class="font-bold text-lg">Meu Carrinho</h3>
+        </div>
+        <div class="flex items-center">
+            <span id="cart-count" class="flex items-center justify-center w-6 h-6 bg-red-500 text-xs font-bold rounded-full mr-2">0</span>
+            <span id="cart-total-price" class="font-bold">R$ 0,00</span>
+        </div>
+    </div>
+    
+    <div class="cart-content">
+        <div id="cart-items" class="p-4 space-y-3">
+            <p class="text-slate-500 text-center py-4">Seu carrinho está vazio.</p>
+        </div>
+        
+        <div class="border-t p-4">
+            <button id="checkout-btn" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                Ir para Pagamento
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Configurações do Estabelecimento
+        const restaurantConfig = {
+            name: "Speedy Lanches",
+            slogan: "Sua fome não espera. A gente também não!",
+            whatsappNumber: "5588994481903",
+            pixKey: "88994481903",
+            menu: [
+                {
+                    category: "🍔 Hambúrgueres",
+                    items: [
+                        { id: 1, name: "Hambúguer Comum", description: "Carne, Queijo, Presunto e Alface", price: 15.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Comum" },
+                        { id: 2, name: "X-Salada", description: "Carne, Queijo, 2 fatias de Tomate e 2 folhas de Alface", price: 18.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Salada" },
+                        { id: 3, name: "Hambúguer Tradicional", description: "Carne, Queijo, Presunto, Ovo e Alface", price: 20.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Tradicional" },
+                        { id: 4, name: "X-Tudo", description: "Carne, Queijo, Presunto, Ovo, Calabresa, Bacon e Alface", price: 25.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Tudo" },
+                        { id: 5, name: "X-Frango", description: "Frango, Queijo, Bacon, Calabresa, Presunto, e Alface", price: 22.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Frango" },
+                        { id: 6, name: "Golozão", description: "Carne, 02 Ovos, 02 Queijo, 02 Presunto e Alface", price: 24.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Golozão" },
+                        { id: 7, name: "Especial", description: "Carne Artesanal, Calabresa, Bacon, Creme Cheese e Alface", price: 28.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Especial" },
+                        { id: 8, name: "Especial 2", description: "Carne Artesanal, Queijo e Abacaxi grelhado", price: 27.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Especial2" },
+                        { id: 9, name: "X-Bacon", description: "Carne, Bacon, Queijo, Presunto, Alface, Catchup e Maionese Temperada", price: 23.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Bacon" },
+                        { id: 10, name: "X-Calabresa", description: "Carne, Calabresa, Queijo, Presunto, Alface, Catchup e Maionese Temperada", price: 22.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Calabresa" }
+                    ]},
+                    {
+                        category: "pasteis",
+                        items: [
+                        { id: 2, name: "X-Salada", description: "Carne, Queijo, 2 fatias de Tomate e 2 folhas de Alface", price: 18.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Salada" }
+                        ]
+                }
+            ]
+        };
+
+        let cart = [];
+
+        const elements = {
+            menuSection: document.getElementById('menu-section'),
+            checkoutSection: document.getElementById('checkout-section'),
+            finalButtons: document.getElementById('final-buttons'),
+            backToMenuBtn: document.getElementById('back-to-menu-btn'),
+            sendOrderBtn: document.getElementById('send-order-btn'),
+            cartCount: document.getElementById('cart-count'),
+            cartItems: document.getElementById('cart-items'),
+            cartTotalPrice: document.getElementById('cart-total-price'),
+            trocoInput: document.getElementById('troco'),
+            trocoResult: document.getElementById('troco-result'),
+            trocoValue: document.getElementById('troco-value'),
+            checkoutBtn: document.getElementById('checkout-btn'),
+            fixedCart: document.getElementById('fixed-cart'),
+            cartHeader: document.querySelector('.cart-header')
+        };
+
+        // Inicialização
+        function init() {
+            renderMenu();
+            setupEventListeners();
+        }
+
+        // Renderizar o cardápio com controles de quantidade
+        function renderMenu() {
+            elements.menuSection.innerHTML = '';
+            restaurantConfig.menu.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.innerHTML = `<h2 class="text-2xl font-bold text-slate-800 mb-4">${category.category}</h2>`;
+                
+                const itemsGrid = document.createElement('div');
+                itemsGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+
+                category.items.forEach(item => {
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'flex items-center bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative';
+                    
+                    const cartItem = cart.find(i => i.id === item.id);
+                    const quantity = cartItem ? cartItem.quantity : 0;
+                    
+                    itemCard.innerHTML = `
+                        <img src="${item.image}" alt="${item.name}" class="w-20 h-20 md:w-24 md:h-24 rounded-md object-cover mr-4">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg">${item.name}</h3>
+                            <p class="text-slate-600 text-sm">${item.description}</p>
+                            <p class="font-semibold text-base mt-2">R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="remove-item-btn ${quantity === 0 ? 'hidden' : ''} text-red-500" data-id="${item.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <span class="item-quantity ${quantity === 0 ? 'hidden' : ''} font-bold text-indigo-600 min-w-[20px] text-center">${quantity}</span>
+                            <button class="add-to-cart-btn text-indigo-600 hover:text-indigo-800 cart-indicator ${quantity > 0 ? 'active' : ''}" data-id="${item.id}">
+                                <i class="fas fa-plus-circle text-3xl"></i>
+                            </button>
+                        </div>
+                    `;
+                    itemsGrid.appendChild(itemCard);
+                });
+                
+                categoryDiv.appendChild(itemsGrid);
+                elements.menuSection.appendChild(categoryDiv);
+            });
+        }
+
+        // Adicionar item ao carrinho
+        function addToCart(itemId) {
+            const itemToAdd = restaurantConfig.menu
+                .flatMap(c => c.items)
+                .find(item => item.id === parseInt(itemId));
+
+            if (!itemToAdd) return;
+
+            const existingItem = cart.find(item => item.id === itemToAdd.id);
+
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...itemToAdd, quantity: 1 });
+            }
+
+            updateCart();
+            renderMenu();
+        }
+
+        // Remover item do carrinho
+        function removeFromCart(itemId) {
+            const itemIndex = cart.findIndex(item => item.id === parseInt(itemId));
+            
+            if (itemIndex !== -1) {
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity--;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+            }
+
+            updateCart();
+            renderMenu();
+        }
+
+        // Atualizar carrinho
+        function updateCart() {
+            // Atualizar contador do carrinho
+            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            elements.cartCount.textContent = totalCount;
+            
+            // Atualizar total
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            elements.cartTotalPrice.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            
+            // Atualizar itens no carrinho
+            if (cart.length === 0) {
+                elements.cartItems.innerHTML = '<p class="text-slate-500 text-center py-4">Seu carrinho está vazio.</p>';
+                elements.checkoutBtn.disabled = true;
+            } else {
+                elements.cartItems.innerHTML = cart.map(item => `
+                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-bold text-sm">${item.name}</p>
+                            <p class="text-xs text-slate-500">R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.quantity}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="change-quantity-btn text-slate-500 text-sm" data-id="${item.id}" data-change="-1">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button class="change-quantity-btn text-slate-500 text-sm" data-id="${item.id}" data-change="1">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="remove-item-btn text-red-500" data-id="${item.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                elements.checkoutBtn.disabled = false;
+            }
+        }
+
+        // Configurar listeners
+        function setupEventListeners() {
+            // Adicionar itens ao carrinho
+            elements.menuSection.addEventListener('click', e => {
+                if (e.target.closest('.add-to-cart-btn')) {
+                    const btn = e.target.closest('.add-to-cart-btn');
+                    addToCart(btn.dataset.id);
+                    btn.classList.add('active');
+                    setTimeout(() => { btn.classList.remove('active'); }, 300);
+                }
+                
+                if (e.target.closest('.remove-item-btn')) {
+                    const btn = e.target.closest('.remove-item-btn');
+                    removeFromCart(btn.dataset.id);
+                }
+            });
+
+            // Carrinho
+            elements.cartItems.addEventListener('click', e => {
+                if (e.target.closest('.change-quantity-btn')) {
+                    const btn = e.target.closest('.change-quantity-btn');
+                    const change = parseInt(btn.dataset.change);
+                    const id = btn.dataset.id;
+                    
+                    if (change === 1) {
+                        addToCart(id);
+                    } else {
+                        removeFromCart(id);
+                    }
+                }
+                
+                if (e.target.closest('.remove-item-btn')) {
+                    const btn = e.target.closest('.remove-item-btn');
+                    const id = btn.dataset.id;
+                    cart = cart.filter(item => item.id != id);
+                    updateCart();
+                    renderMenu();
+                }
+            });
+            
+            // Ir para pagamento
+            elements.checkoutBtn.addEventListener('click', showCheckout);
+            
+            elements.backToMenuBtn.addEventListener('click', showMenu);
+            elements.sendOrderBtn.addEventListener('click', sendOrder);
+
+            // Pagamento
+            document.querySelectorAll('input[name="payment"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const paymentMethod = e.target.value;
+                    const trocoDiv = document.getElementById('troco-div');
+                    const pixDetails = document.getElementById('pix-details');
+                    const cartaoAviso = document.getElementById('cartao-aviso');
+                    
+                    trocoDiv.classList.add('hidden');
+                    pixDetails.classList.add('hidden');
+                    cartaoAviso.classList.add('hidden');
+
+                    if (paymentMethod === 'Dinheiro') {
+                        trocoDiv.classList.remove('hidden');
+                    } else if (paymentMethod === 'PIX') {
+                        pixDetails.classList.remove('hidden');
+                    } else if (paymentMethod === 'Cartão na Entrega') {
+                        cartaoAviso.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Calcular troco
+            if (elements.trocoInput) {
+                elements.trocoInput.addEventListener('input', calculateTroco);
+            }
+
+            // Minimizar/maximizar carrinho ao clicar no cabeçalho
+            elements.cartHeader.addEventListener('click', () => {
+                elements.fixedCart.classList.toggle('cart-expanded');
+            });
+        }
+
+        function calculateTroco() {
+            const total = getTotal();
+            const trocoValueStr = elements.trocoInput.value.replace(/[^0-9,]/g, '').replace(',', '.');
+            const trocoValueNum = parseFloat(trocoValueStr);
+            
+            if (!isNaN(trocoValueNum)) {
+                const troco = trocoValueNum - total;
+                if (troco > 0) {
+                    elements.trocoResult.classList.remove('hidden');
+                    elements.trocoValue.textContent = `R$ ${troco.toFixed(2).replace('.', ',')}`;
+                } else {
+                    elements.trocoResult.classList.add('hidden');
+                }
+            } else {
+                elements.trocoResult.classList.add('hidden');
+            }
+        }
+
+        function getTotal() {
+            return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        }
+
+        function showCheckout() {
+            elements.menuSection.classList.add('hidden');
+            elements.checkoutSection.classList.remove('hidden');
+            elements.finalButtons.classList.remove('hidden');
+            elements.finalButtons.classList.add('flex');
+            
+            // Atualizar resumo no checkout
+            const checkoutCartItems = document.getElementById('checkout-cart-items');
+            const checkoutTotalPrice = document.getElementById('checkout-total-price');
+
+            checkoutCartItems.innerHTML = cart.map(item => `
+                <p><b>${item.quantity}x</b> ${item.name} - R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+            `).join('');
+            
+            checkoutTotalPrice.textContent = `R$ ${getTotal().toFixed(2).replace('.', ',')}`;
+            
+            // Minimizar o carrinho durante o checkout
+            elements.fixedCart.classList.remove('cart-expanded');
+        }
+
+        function showMenu() {
+            elements.menuSection.classList.remove('hidden');
+            elements.checkoutSection.classList.add('hidden');
+            elements.finalButtons.classList.add('hidden');
+            elements.finalButtons.classList.remove('flex');
+            
+            // Expandir o carrinho ao voltar ao menu
+            elements.fixedCart.classList.add('cart-expanded');
+        }
+
+        function sendOrder() {
+            const name = document.getElementById('name').value.trim();
+            const street = document.getElementById('street').value.trim();
+            const neighborhood = document.getElementById('neighborhood').value.trim();
+            const houseNumber = document.getElementById('house-number').value.trim();
+            const reference = document.getElementById('reference').value.trim();
+            const paymentMethod = document.querySelector('input[name="payment"]:checked');
+            
+            if (!name || !street || !neighborhood || !houseNumber) {
+                alert('Por favor, preencha pelo menos seu nome, rua, bairro e número/cor da casa.');
+                return;
+            }
+            if (!paymentMethod) {
+                alert('Por favor, escolha uma forma de pagamento.');
+                return;
+            }
+
+            let orderMessage = `*=== NOVO PEDIDO ===*\n\n`;
+            orderMessage += `*Cliente:* ${name}\n`;
+            orderMessage += `*Endereço:* Rua ${street}, ${neighborhood}, ${houseNumber}\n`;
+            if (reference) orderMessage += `*Referência:* ${reference}\n`;
+            orderMessage += `\n*Itens do Pedido:*\n`;
+            
+            cart.forEach(item => {
+                orderMessage += `*- ${item.quantity}x* ${item.name} - R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n`;
+            });
+            
+            const total = getTotal();
+            orderMessage += `\n*Total do Pedido: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+            orderMessage += `*Forma de Pagamento:* ${paymentMethod.value}\n`;
+
+            if (paymentMethod.value === 'Dinheiro') {
+                const trocoValueStr = elements.trocoInput.value.replace(/[^0-9,]/g, '').replace(',', '.');
+                const trocoValueNum = parseFloat(trocoValueStr);
+                
+                if (!isNaN(trocoValueNum)) {
+                    const trocoCalculado = trocoValueNum - total;
+                    if (trocoCalculado > 0) {
+                        orderMessage += `(Troco para: R$ ${trocoValueNum.toFixed(2).replace('.', ',')} - Seu troco será R$ ${trocoCalculado.toFixed(2).replace('.', ',')})\n`;
+                    }
+                }
+            }
+            
+            if (paymentMethod.value === 'PIX') {
+                orderMessage += `\n*Atenção:* O comprovante do PIX será enviado em seguida.`;
+            }
+
+            const encodedMessage = encodeURIComponent(orderMessage);
+            window.open(`https://wa.me/${restaurantConfig.whatsappNumber}?text=${encodedMessage}`, '_blank');
+        }
+
+        // Iniciar
+        init();
+    });
+</script>
+</body>
+</html>
