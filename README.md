@@ -1,0 +1,1 @@
+- projeto de delivery criado com IA Deepshark e Gemini

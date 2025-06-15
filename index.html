@@ -38,29 +38,58 @@
             z-index: 100;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             border-radius: 12px;
-            overflow: hidden;
+            overflow: hidden; /* Mantido para o arredondamento */
+            display: flex; /* Adicionado para usar flexbox */
+            flex-direction: column; /* Organiza os itens em coluna */
             transition: all 0.3s ease;
         }
         .cart-header {
             cursor: pointer;
             transition: background-color 0.2s;
+            flex-shrink: 0; /* Impede que o cabeçalho encolha */
         }
         .cart-header:hover {
             background-color: #554edefe;
         }
         .cart-content {
-            max-height: 0;
-            overflow-y: auto;
+            flex-grow: 1; /* Permite que o conteúdo do carrinho ocupe o espaço disponível */
+            overflow-y: auto; /* Adiciona scroll apenas ao conteúdo dos itens */
+            max-height: 0; /* Controlado pelo JS */
             transition: max-height 0.4s ease;
+            padding-bottom: 0; /* Remove padding para não afetar o botão fixo */
         }
         .cart-expanded .cart-content {
-            max-height: 300px;
+            max-height: 300px; /* Altura máxima quando expandido */
         }
+        .cart-hidden {
+            display: none; /* Nova classe para esconder o carrinho */
+        }
+
+        /* Classe para o botão "Voltar às Categorias" se comportar como "sticky" */
+        .sticky-back-button {
+            position: sticky; /* ou -webkit-sticky para compatibilidade */
+            top: 20px; /* Distância do topo da tela quando "cola" */
+            z-index: 80; /* Garante que fique acima dos itens, mas abaixo do carrinho */
+            margin-bottom: 1rem; /* Espaçamento abaixo do botão */
+        }
+
+        /* Novo estilo para o container do botão "Ir para Pagamento" */
+        .cart-checkout-button-container {
+            flex-shrink: 0; /* Impede que o container do botão encolha */
+            padding: 1rem; /* Padding para o botão */
+            background-color: white; /* Garante que o fundo do botão seja branco */
+            border-top: 1px solid #e2e8f0; /* Linha divisória */
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05); /* Sombra para destacar que está fixo */
+        }
+
         @media (max-width: 640px) {
             .fixed-cart {
                 width: calc(100% - 40px);
                 right: 20px;
                 left: 20px;
+            }
+            .sticky-back-button {
+                top: 15px; /* Ajuste para telas menores */
             }
         }
     </style>
@@ -69,18 +98,26 @@
 
 <div id="app" class="max-w-3xl mx-auto p-4 md:p-6">
 
-    <!-- Cabeçalho -->
     <header class="text-center mb-8">
         <h1 class="text-4xl font-bold text-slate-900">Speedy Lanches</h1>
         <p class="text-slate-600 mt-2">Sua fome não espera. A gente também não!</p>
     </header>
 
-    <!-- Seção do Cardápio -->
-    <main id="menu-section" class="space-y-8">
-        <!-- Itens serão inseridos pelo JavaScript -->
+    <main id="main-categories-section" class="space-y-4 fade-in">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Escolha sua Categoria</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="categories-grid">
+            </div>
     </main>
 
-    <!-- Seção do Checkout (Oculta) -->
+    <main id="menu-section" class="hidden space-y-8 fade-in">
+        <button id="back-to-categories-btn" class="sticky-back-button bg-slate-200 text-slate-800 py-2 px-4 rounded-lg font-bold hover:bg-slate-300">
+            <i class="fas fa-arrow-left mr-2"></i> Voltar às Categorias
+        </button>
+        <h2 class="text-2xl font-bold text-slate-800 mb-4" id="current-category-title"></h2>
+        <div id="category-items-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            </div>
+    </main>
+
     <section id="checkout-section" class="hidden fade-in space-y-6">
         <h2 class="text-2xl font-bold border-b pb-2">Finalizar Pedido</h2>
         
@@ -112,11 +149,15 @@
                     <input type="text" id="house-number" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
-                    <label for="reference" class="block text-sm font-medium text-slate-700">Ponto de Referência</label>
+                    <label for="reference" class="block text-sm font-medium text-slate-700">Ponto de Referência (opcional)</label>
                     <input type="text" id="reference" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
             </div>
-            
+
+            <div>
+                <label for="observation" class="block text-sm font-medium text-slate-700">Observação (opcional)</label>
+                <input type="text" id="observation" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ex: Não tocar a campainha, deixar na portaria, etc.">
+            </div>
             <div>
                 <h3 class="text-lg font-semibold mb-2">Forma de Pagamento</h3>
                 <div class="space-y-2">
@@ -125,7 +166,7 @@
                         <span class="ml-3 font-medium"><i class="fas fa-money-bill-wave mr-2 text-green-500"></i>Dinheiro</span>
                     </label>
                     <div id="troco-div" class="hidden pl-8 mt-2 space-y-2">
-                        <label for="troco" class="block text-sm font-medium text-slate-700">Valor em dinheiro que você vai dar</label>
+                        <label for="troco" class="block text-sm font-medium text-slate-700">Valor em dinheiro para troco</label>
                         <input type="text" id="troco" placeholder="Ex: R$ 100,00" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm">
                         <div id="troco-result" class="hidden bg-green-50 text-green-800 p-2 rounded-md mt-2">
                             <p class="font-bold">Seu troco será: <span id="troco-value">R$ 0,00</span></p>
@@ -147,8 +188,8 @@
                     </label>
 
                     <div id="pix-details" class="hidden p-4 border-l-4 border-cyan-500 bg-cyan-50 mt-2 rounded-r-lg space-y-3">
-                        <p class="font-semibold text-center">Chave PIX (Telefone): <span>(88) 99448-1903</span></p>
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=00020126580014BR.GOV.BCB.PIX01368899448190352040000530398654041.005802BR5925Speedy%20Lanches%20Ltda6009Fortaleza62070503***6304E6E9" alt="QR Code PIX" class="mx-auto my-2 rounded-md">
+                        <p class="font-semibold text-center">Chave PIX (Telefone): <span id="pix-key-display"></span></p>
+                        <img id="pix-qr-code" src="" alt="QR Code PIX" class="mx-auto my-2 rounded-md">
                         <div class="text-center bg-yellow-100 border border-yellow-300 text-yellow-800 p-3 rounded-lg">
                             <p class="font-bold">Envie o comprovante no WhatsApp!</p>
                             <p class="text-sm mt-1">Seu pedido só será preparado após o envio do comprovante.</p>
@@ -159,9 +200,8 @@
         </form>
     </section>
     
-    <!-- Botões de Ação Final (Checkout) -->
     <div id="final-buttons" class="hidden mt-8 flex flex-col sm:flex-row gap-4">
-        <button id="back-to-menu-btn" class="w-full bg-slate-200 text-slate-800 py-3 rounded-lg font-bold hover:bg-slate-300">
+        <button id="back-to-menu-from-checkout-btn" class="w-full bg-slate-200 text-slate-800 py-3 rounded-lg font-bold hover:bg-slate-300">
             <i class="fas fa-arrow-left mr-2"></i> Voltar ao Cardápio
         </button>
         <button id="send-order-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700">
@@ -170,7 +210,6 @@
     </div>
 </div>
 
-<!-- Carrinho Fixo no Canto Inferior Direito -->
 <div id="fixed-cart" class="fixed-cart bg-white border border-gray-200 ">
     <div class="cart-header bg-indigo-600 text-white p-4 flex justify-between items-center">
         <div class="flex items-center">
@@ -187,12 +226,12 @@
         <div id="cart-items" class="p-4 space-y-3">
             <p class="text-slate-500 text-center py-4">Seu carrinho está vazio.</p>
         </div>
-        
-        <div class="border-t p-4">
-            <button id="checkout-btn" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed">
-                Ir para Pagamento
-            </button>
-        </div>
+    </div>
+
+    <div class="cart-checkout-button-container">
+        <button id="checkout-btn" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed">
+            Ir para Pagamento
+        </button>
     </div>
 </div>
 
@@ -202,11 +241,12 @@
         const restaurantConfig = {
             name: "Speedy Lanches",
             slogan: "Sua fome não espera. A gente também não!",
-            whatsappNumber: "5588994481903",
-            pixKey: "88994481903",
+            whatsappNumber: "5588994481903", // Coloque seu número do WhatsApp aqui, ex: 5588912345678
+            pixKey: "88994481903", // Chave PIX (telefone, email, CPF, etc.)
             menu: [
                 {
-                    category: "🍔 Hambúrgueres",
+                    category: "Hambúrgueres",
+                    icon: "🍔",
                     items: [
                         { id: 1, name: "Hambúguer Comum", description: "Carne, Queijo, Presunto e Alface", price: 15.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Comum" },
                         { id: 2, name: "X-Salada", description: "Carne, Queijo, 2 fatias de Tomate e 2 folhas de Alface", price: 18.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Salada" },
@@ -218,23 +258,53 @@
                         { id: 8, name: "Especial 2", description: "Carne Artesanal, Queijo e Abacaxi grelhado", price: 27.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Especial2" },
                         { id: 9, name: "X-Bacon", description: "Carne, Bacon, Queijo, Presunto, Alface, Catchup e Maionese Temperada", price: 23.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Bacon" },
                         { id: 10, name: "X-Calabresa", description: "Carne, Calabresa, Queijo, Presunto, Alface, Catchup e Maionese Temperada", price: 22.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Calabresa" }
-                    ]},
-                    {
-                        category: "pasteis",
-                        items: [
-                        { id: 2, name: "X-Salada", description: "Carne, Queijo, 2 fatias de Tomate e 2 folhas de Alface", price: 18.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Salada" }
-                        ]
+                    ]
+                },
+                {
+                    category: "Pastéis",
+                    icon: "🥟",
+                    items: [
+                        { id: 11, name: "Pastel de Carne", description: "Carne moída temperada", price: 8.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Carne" },
+                        { id: 12, name: "Pastel de Frango com Catupiry", description: "Frango desfiado com catupiry original", price: 9.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Frango" },
+                        { id: 13, name: "Pastel de Queijo", description: "Queijo mussarela derretido", price: 7.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Queijo" },
+                        { id: 14, name: "Pastel Romeu e Julieta", description: "Queijo com goiabada", price: 8.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Doce" }
+                    ]
+                },
+                {
+                    category: "Bebidas",
+                    icon: "🥤",
+                    items: [
+                        { id: 21, name: "Coca-Cola Lata", description: "350ml", price: 6.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Coca" },
+                        { id: 22, name: "Guaraná Antártica Lata", description: "350ml", price: 5.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Guaraná" },
+                        { id: 23, name: "Água Mineral", description: "500ml", price: 3.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Água" },
+                        { id: 24, name: "Suco de Laranja Natural", description: "300ml", price: 8.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Suco" }
+                    ]
+                },
+                {
+                    category: "Pizzas",
+                    icon: "🍕",
+                    items: [
+                        { id: 31, name: "Pizza Calabresa (P)", description: "Molho, mussarela, calabresa, cebola", price: 35.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pizza+Calabresa" },
+                        { id: 32, name: "Pizza Frango c/ Catupiry (P)", description: "Molho, mussarela, frango desfiado, catupiry", price: 38.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pizza+Frango" },
+                        { id: 33, name: "Pizza Muçarela (P)", description: "Molho, mussarela, orégano", price: 30.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pizza+Muçarela" }
+                    ]
                 }
             ]
         };
 
         let cart = [];
+        let currentCategory = null; // Para controlar a categoria atualmente exibida
 
         const elements = {
+            mainCategoriesSection: document.getElementById('main-categories-section'),
+            categoriesGrid: document.getElementById('categories-grid'),
             menuSection: document.getElementById('menu-section'),
+            currentCategoryTitle: document.getElementById('current-category-title'),
+            categoryItemsGrid: document.getElementById('category-items-grid'),
+            backToCategoriesBtn: document.getElementById('back-to-categories-btn'),
             checkoutSection: document.getElementById('checkout-section'),
             finalButtons: document.getElementById('final-buttons'),
-            backToMenuBtn: document.getElementById('back-to-menu-btn'),
+            backToMenuFromCheckoutBtn: document.getElementById('back-to-menu-from-checkout-btn'),
             sendOrderBtn: document.getElementById('send-order-btn'),
             cartCount: document.getElementById('cart-count'),
             cartItems: document.getElementById('cart-items'),
@@ -244,54 +314,85 @@
             trocoValue: document.getElementById('troco-value'),
             checkoutBtn: document.getElementById('checkout-btn'),
             fixedCart: document.getElementById('fixed-cart'),
-            cartHeader: document.querySelector('.cart-header')
+            cartHeader: document.querySelector('.cart-header'),
+            pixKeyDisplay: document.getElementById('pix-key-display'),
+            pixQrCode: document.getElementById('pix-qr-code')
         };
 
         // Inicialização
         function init() {
-            renderMenu();
+            renderMainCategories();
             setupEventListeners();
+            updateCart(); // Renderiza o carrinho vazio ou com itens iniciais
+            elements.pixKeyDisplay.textContent = restaurantConfig.pixKey;
+            // O QR code só será gerado com o valor correto no checkout
         }
 
-        // Renderizar o cardápio com controles de quantidade
-        function renderMenu() {
-            elements.menuSection.innerHTML = '';
-            restaurantConfig.menu.forEach(category => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.innerHTML = `<h2 class="text-2xl font-bold text-slate-800 mb-4">${category.category}</h2>`;
-                
-                const itemsGrid = document.createElement('div');
-                itemsGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+        // Renderizar o menu principal de categorias
+        function renderMainCategories() {
+            elements.mainCategoriesSection.classList.remove('hidden');
+            elements.menuSection.classList.add('hidden');
+            elements.checkoutSection.classList.add('hidden');
+            elements.finalButtons.classList.add('hidden');
+            elements.finalButtons.classList.remove('flex'); // Esconde os botões de checkout
+            elements.fixedCart.classList.remove('cart-hidden'); // Mostra o carrinho
+            elements.backToCategoriesBtn.classList.add('hidden'); // Esconde o botão "Voltar" na tela de categorias
 
-                category.items.forEach(item => {
-                    const itemCard = document.createElement('div');
-                    itemCard.className = 'flex items-center bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative';
-                    
-                    const cartItem = cart.find(i => i.id === item.id);
-                    const quantity = cartItem ? cartItem.quantity : 0;
-                    
-                    itemCard.innerHTML = `
-                        <img src="${item.image}" alt="${item.name}" class="w-20 h-20 md:w-24 md:h-24 rounded-md object-cover mr-4">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg">${item.name}</h3>
-                            <p class="text-slate-600 text-sm">${item.description}</p>
-                            <p class="font-semibold text-base mt-2">R$ ${item.price.toFixed(2).replace('.', ',')}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button class="remove-item-btn ${quantity === 0 ? 'hidden' : ''} text-red-500" data-id="${item.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                            <span class="item-quantity ${quantity === 0 ? 'hidden' : ''} font-bold text-indigo-600 min-w-[20px] text-center">${quantity}</span>
-                            <button class="add-to-cart-btn text-indigo-600 hover:text-indigo-800 cart-indicator ${quantity > 0 ? 'active' : ''}" data-id="${item.id}">
-                                <i class="fas fa-plus-circle text-3xl"></i>
-                            </button>
-                        </div>
-                    `;
-                    itemsGrid.appendChild(itemCard);
-                });
+            elements.categoriesGrid.innerHTML = '';
+            restaurantConfig.menu.forEach(category => {
+                const categoryCard = document.createElement('button');
+                categoryCard.className = 'category-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col items-center justify-center cursor-pointer';
+                categoryCard.dataset.category = category.category;
+                categoryCard.innerHTML = `
+                    <span class="text-5xl mb-3">${category.icon}</span>
+                    <h3 class="font-bold text-xl text-slate-900">${category.category}</h3>
+                `;
+                elements.categoriesGrid.appendChild(categoryCard);
+            });
+        }
+
+        // Renderizar os itens de uma categoria específica
+        function renderCategoryItems(categoryName) {
+            elements.mainCategoriesSection.classList.add('hidden');
+            elements.menuSection.classList.remove('hidden');
+            elements.checkoutSection.classList.add('hidden');
+            elements.finalButtons.classList.add('hidden');
+            elements.finalButtons.classList.remove('flex'); // Esconde os botões de checkout
+            elements.fixedCart.classList.remove('cart-hidden'); // Mostra o carrinho
+            elements.backToCategoriesBtn.classList.remove('hidden'); // Mostra o botão "Voltar" na tela do cardápio
+
+            const category = restaurantConfig.menu.find(cat => cat.category === categoryName);
+            if (!category) return;
+
+            currentCategory = categoryName; // Define a categoria atual
+            elements.currentCategoryTitle.textContent = `${category.icon} ${category.category}`;
+            elements.categoryItemsGrid.innerHTML = '';
+
+            category.items.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = 'flex items-center bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative';
                 
-                categoryDiv.appendChild(itemsGrid);
-                elements.menuSection.appendChild(categoryDiv);
+                const cartItem = cart.find(i => i.id === item.id);
+                const quantity = cartItem ? cartItem.quantity : 0;
+                
+                itemCard.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="w-20 h-20 md:w-24 md:h-24 rounded-md object-cover mr-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-lg">${item.name}</h3>
+                        <p class="text-slate-600 text-sm">${item.description}</p>
+                        <p class="font-semibold text-base mt-2">R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="remove-item-btn ${quantity === 0 ? 'hidden' : ''} text-red-500" data-id="${item.id}">
+                            <i class="fas fa-minus-circle text-2xl"></i>
+                        </button>
+                        <span class="item-quantity ${quantity === 0 ? 'hidden' : ''} font-bold text-indigo-600 min-w-[20px] text-center">${quantity}</span>
+                        <button class="add-to-cart-btn text-indigo-600 hover:text-indigo-800 cart-indicator ${quantity > 0 ? 'active' : ''}" data-id="${item.id}">
+                            <i class="fas fa-plus-circle text-3xl"></i>
+                        </button>
+                    </div>
+                `;
+                elements.categoryItemsGrid.appendChild(itemCard);
             });
         }
 
@@ -312,10 +413,12 @@
             }
 
             updateCart();
-            renderMenu();
+            if (currentCategory) { // Re-renderiza a categoria atual para atualizar as quantidades
+                renderCategoryItems(currentCategory);
+            }
         }
 
-        // Remover item do carrinho
+        // Remover item do carrinho (do cardápio, diminuindo 1)
         function removeFromCart(itemId) {
             const itemIndex = cart.findIndex(item => item.id === parseInt(itemId));
             
@@ -328,7 +431,9 @@
             }
 
             updateCart();
-            renderMenu();
+            if (currentCategory) { // Re-renderiza a categoria atual para atualizar as quantidades
+                renderCategoryItems(currentCategory);
+            }
         }
 
         // Atualizar carrinho
@@ -356,10 +461,11 @@
                             <button class="change-quantity-btn text-slate-500 text-sm" data-id="${item.id}" data-change="-1">
                                 <i class="fas fa-minus"></i>
                             </button>
+                            <span class="font-bold text-sm">${item.quantity}</span>
                             <button class="change-quantity-btn text-slate-500 text-sm" data-id="${item.id}" data-change="1">
                                 <i class="fas fa-plus"></i>
                             </button>
-                            <button class="remove-item-btn text-red-500" data-id="${item.id}">
+                            <button class="remove-item-full-btn text-red-500 ml-2" data-id="${item.id}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -371,7 +477,18 @@
 
         // Configurar listeners
         function setupEventListeners() {
-            // Adicionar itens ao carrinho
+            // Navegação entre categorias
+            elements.categoriesGrid.addEventListener('click', e => {
+                const btn = e.target.closest('.category-card');
+                if (btn) {
+                    renderCategoryItems(btn.dataset.category);
+                }
+            });
+
+            // Botão "Voltar às Categorias"
+            elements.backToCategoriesBtn.addEventListener('click', renderMainCategories);
+
+            // Adicionar/Remover itens do cardápio de categoria
             elements.menuSection.addEventListener('click', e => {
                 if (e.target.closest('.add-to-cart-btn')) {
                     const btn = e.target.closest('.add-to-cart-btn');
@@ -386,7 +503,7 @@
                 }
             });
 
-            // Carrinho
+            // Gerenciar itens no carrinho (dentro do painel fixo)
             elements.cartItems.addEventListener('click', e => {
                 if (e.target.closest('.change-quantity-btn')) {
                     const btn = e.target.closest('.change-quantity-btn');
@@ -400,22 +517,40 @@
                     }
                 }
                 
-                if (e.target.closest('.remove-item-btn')) {
-                    const btn = e.target.closest('.remove-item-btn');
-                    const id = btn.dataset.id;
-                    cart = cart.filter(item => item.id != id);
+                if (e.target.closest('.remove-item-full-btn')) { // Botão de lixeira para remover completamente do carrinho
+                    const btn = e.target.closest('.remove-item-full-btn');
+                    const id = parseInt(btn.dataset.id);
+                    cart = cart.filter(item => item.id !== id);
                     updateCart();
-                    renderMenu();
+                    if (currentCategory) {
+                        renderCategoryItems(currentCategory); // Atualiza a visualização da categoria
+                    }
                 }
             });
             
-            // Ir para pagamento
+            // Ir para pagamento (botão do carrinho)
             elements.checkoutBtn.addEventListener('click', showCheckout);
             
-            elements.backToMenuBtn.addEventListener('click', showMenu);
+            // Voltar ao cardápio (do checkout)
+            elements.backToMenuFromCheckoutBtn.addEventListener('click', () => {
+                if (currentCategory) { // Se estava numa categoria, volta para ela
+                    renderCategoryItems(currentCategory);
+                } else { // Se estava no menu principal, volta para ele
+                    renderMainCategories();
+                }
+                // Garante que a seção principal do cardápio ou categorias esteja visível e o checkout escondido
+                elements.checkoutSection.classList.add('hidden');
+                elements.finalButtons.classList.add('hidden');
+                elements.finalButtons.classList.remove('flex');
+                
+                // Mostra o carrinho ao voltar para o menu/categorias
+                elements.fixedCart.classList.remove('cart-hidden');
+                elements.fixedCart.classList.add('cart-expanded'); // Opcional: manter o carrinho expandido ao voltar
+            });
+
             elements.sendOrderBtn.addEventListener('click', sendOrder);
 
-            // Pagamento
+            // Pagamento (radios de seleção)
             document.querySelectorAll('input[name="payment"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const paymentMethod = e.target.value;
@@ -471,10 +606,14 @@
         }
 
         function showCheckout() {
+            elements.mainCategoriesSection.classList.add('hidden');
             elements.menuSection.classList.add('hidden');
             elements.checkoutSection.classList.remove('hidden');
             elements.finalButtons.classList.remove('hidden');
             elements.finalButtons.classList.add('flex');
+            
+            elements.fixedCart.classList.add('cart-hidden'); // Esconde o carrinho no checkout
+            elements.backToCategoriesBtn.classList.add('hidden'); // Esconde o botão "Voltar" no checkout
             
             // Atualizar resumo no checkout
             const checkoutCartItems = document.getElementById('checkout-cart-items');
@@ -486,18 +625,19 @@
             
             checkoutTotalPrice.textContent = `R$ ${getTotal().toFixed(2).replace('.', ',')}`;
             
-            // Minimizar o carrinho durante o checkout
-            elements.fixedCart.classList.remove('cart-expanded');
+            // Atualiza o QR Code do PIX com o valor total
+            const pixData = `00020126580014BR.GOV.BCB.PIX01${restaurantConfig.pixKey.length}${restaurantConfig.pixKey}5204000053039865404${getTotal().toFixed(2).replace('.', '')}5802BR59${restaurantConfig.name.length}${restaurantConfig.name.replace(/\s/g, '%20')}6009Fortaleza62070503***6304E6E9`;
+            elements.pixQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixData)}`;
         }
 
-        function showMenu() {
-            elements.menuSection.classList.remove('hidden');
-            elements.checkoutSection.classList.add('hidden');
-            elements.finalButtons.classList.add('hidden');
-            elements.finalButtons.classList.remove('flex');
-            
-            // Expandir o carrinho ao voltar ao menu
-            elements.fixedCart.classList.add('cart-expanded');
+        function generateOrderId() {
+            // Gera um ID de 4 caracteres aleatórios (letras maiúsculas e números)
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 4; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
         }
 
         function sendOrder() {
@@ -506,21 +646,29 @@
             const neighborhood = document.getElementById('neighborhood').value.trim();
             const houseNumber = document.getElementById('house-number').value.trim();
             const reference = document.getElementById('reference').value.trim();
-            const paymentMethod = document.querySelector('input[name="payment"]:checked');
+            const observation = document.getElementById('observation').value.trim(); // Captura o valor da observação
+            const paymentMethodRadio = document.querySelector('input[name="payment"]:checked');
             
             if (!name || !street || !neighborhood || !houseNumber) {
                 alert('Por favor, preencha pelo menos seu nome, rua, bairro e número/cor da casa.');
                 return;
             }
-            if (!paymentMethod) {
+            if (!paymentMethodRadio) {
                 alert('Por favor, escolha uma forma de pagamento.');
                 return;
             }
 
-            let orderMessage = `*=== NOVO PEDIDO ===*\n\n`;
+            const paymentMethod = paymentMethodRadio.value;
+            const orderId = generateOrderId(); // Gera o ID do pedido
+
+            let orderMessage = `*=== NOVO PEDIDO - ID: ${orderId} ===*\n\n`; // Adiciona o ID aqui
             orderMessage += `*Cliente:* ${name}\n`;
-            orderMessage += `*Endereço:* Rua ${street}, ${neighborhood}, ${houseNumber}\n`;
-            if (reference) orderMessage += `*Referência:* ${reference}\n`;
+            orderMessage += `*Endereço para Entrega:*\n`; // Novo cabeçalho para o endereço
+            orderMessage += `  *Rua:* ${street}\n`;
+            orderMessage += `  *Bairro:* ${neighborhood}\n`;
+            orderMessage += `  *Número/Cor da Casa:* ${houseNumber}\n`;
+            if (reference) orderMessage += `  *Ponto de Referência:* ${reference}\n`;
+            if (observation) orderMessage += `  *Observação:* ${observation}\n`; // Adiciona a observação se preenchida
             orderMessage += `\n*Itens do Pedido:*\n`;
             
             cart.forEach(item => {
@@ -529,9 +677,9 @@
             
             const total = getTotal();
             orderMessage += `\n*Total do Pedido: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
-            orderMessage += `*Forma de Pagamento:* ${paymentMethod.value}\n`;
+            orderMessage += `*Forma de Pagamento:* ${paymentMethod}\n`;
 
-            if (paymentMethod.value === 'Dinheiro') {
+            if (paymentMethod === 'Dinheiro') {
                 const trocoValueStr = elements.trocoInput.value.replace(/[^0-9,]/g, '').replace(',', '.');
                 const trocoValueNum = parseFloat(trocoValueStr);
                 
@@ -543,12 +691,19 @@
                 }
             }
             
-            if (paymentMethod.value === 'PIX') {
+            if (paymentMethod === 'PIX') {
                 orderMessage += `\n*Atenção:* O comprovante do PIX será enviado em seguida.`;
             }
 
             const encodedMessage = encodeURIComponent(orderMessage);
             window.open(`https://wa.me/${restaurantConfig.whatsappNumber}?text=${encodedMessage}`, '_blank');
+            
+            // Limpar carrinho e voltar ao menu principal após o pedido
+            cart = [];
+            updateCart();
+            renderMainCategories();
+            document.getElementById('checkout-form').reset(); // Limpa o formulário de checkout
+            elements.fixedCart.classList.remove('cart-hidden'); // Garante que o carrinho volte a aparecer
         }
 
         // Iniciar
