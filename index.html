@@ -109,7 +109,7 @@
             </div>
     </main>
 
-    <main id="menu-section" class="hidden space-y-8 fade-in">
+    <main id="menu-section" class="hidden space-y-8 fade-in" >
         <button id="back-to-categories-btn" class="sticky-back-button bg-slate-200 text-slate-800 py-2 px-4 rounded-lg font-bold hover:bg-slate-300">
             <i class="fas fa-arrow-left mr-2"></i> Voltar às Categorias
         </button>
@@ -245,50 +245,35 @@
             pixKey: "88994481903", // Chave PIX (telefone, email, CPF, etc.)
             menu: [
                 {
-                    category: "Hambúrgueres",
-                    icon: "🍔",
-                    items: [
-                        { id: 1, name: "Hambúguer Comum", description: "Carne, Queijo, Presunto e Alface", price: 15.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Comum" },
-                        { id: 2, name: "X-Salada", description: "Carne, Queijo, 2 fatias de Tomate e 2 folhas de Alface", price: 18.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Salada" },
-                        { id: 3, name: "Hambúguer Tradicional", description: "Carne, Queijo, Presunto, Ovo e Alface", price: 20.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Tradicional" },
-                        { id: 4, name: "X-Tudo", description: "Carne, Queijo, Presunto, Ovo, Calabresa, Bacon e Alface", price: 25.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Tudo" },
-                        { id: 5, name: "X-Frango", description: "Frango, Queijo, Bacon, Calabresa, Presunto, e Alface", price: 22.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Frango" },
-                        { id: 6, name: "Golozão", description: "Carne, 02 Ovos, 02 Queijo, 02 Presunto e Alface", price: 24.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Golozão" },
-                        { id: 7, name: "Especial", description: "Carne Artesanal, Calabresa, Bacon, Creme Cheese e Alface", price: 28.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Especial" },
-                        { id: 8, name: "Especial 2", description: "Carne Artesanal, Queijo e Abacaxi grelhado", price: 27.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Especial2" },
-                        { id: 9, name: "X-Bacon", description: "Carne, Bacon, Queijo, Presunto, Alface, Catchup e Maionese Temperada", price: 23.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Bacon" },
-                        { id: 10, name: "X-Calabresa", description: "Carne, Calabresa, Queijo, Presunto, Alface, Catchup e Maionese Temperada", price: 22.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Calabresa" }
-                    ]
-                },
+                category: "Hambúrgueres",
+                icon: "🍔",
+                items: [
+                    { id: 1, name: "Tradicional", description: "Pão bola, Carne, Ovo, Presunto, Queijo, Alface e Molho especial.", price: 10.00, image: "imagem/hbtradi.jpg" },
+                    { id: 2, name: "X-Calabresa", description: "Pão bola, Carne, Ovo, Calabresa, Queijo, Alface e Molho especial.", price: 12.00, image: "imagem/hbxcala.jpg" },
+                    { id: 3, name: "X-Burguer", description: "Pão bola, Duas carnes, Ovo, Dois presunto, Dois queijos, Alface e Molho especial.", price: 14.00, image: "imagem/hbxburg.jpg" },
+                    { id: 4, name: "X-Tudo", description: "Pão bola, Duas carnes, Dois Ovos, Calabresa, Dois presuntos, Dois queijo, Alface e Molho especial.", price: 17.00, image: "imagem/hbxtudo.jpg" },
+                ]
+            },
                 {
-                    category: "Pastéis",
-                    icon: "🥟",
-                    items: [
-                        { id: 11, name: "Pastel de Carne", description: "Carne moída temperada", price: 8.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Carne" },
-                        { id: 12, name: "Pastel de Frango com Catupiry", description: "Frango desfiado com catupiry original", price: 9.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Frango" },
-                        { id: 13, name: "Pastel de Queijo", description: "Queijo mussarela derretido", price: 7.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Queijo" },
-                        { id: 14, name: "Pastel Romeu e Julieta", description: "Queijo com goiabada", price: 8.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Pastel+Doce" }
-                    ]
-                },
+                category: "Pão Árabe",
+                icon: '🌮',
+                items: [
+                    { id: 11, name: "Tradicional", description: "Pão árabe, Carne, Ovo, Presunto, Queijo, Alface e Molho especial", price: 12.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Tradicional" },
+                    { id: 12, name: "X-Calabresa", description: "Pão árabe, Carne, Ovo, Calabresa, Queijo, Alface e Molho especial", price: 14.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Calabresa" },
+                    { id: 13, name: "X-Burguer", description: "Pão árabe, Duas carnes, Ovo, Dois presunto, Dois queijos, Alface e Molho especial", price: 16.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Burguer" },
+                    { id: 14, name: "X-Tudo", description: "Pão árabe, Duas carnes, Dois Ovos, Calabresa, Dois presuntos, Dois queijo, Alface e Molho especial.", price: 20.00, image: "https://placehold.co/100x100/fbbf24/422006?text=X-Tudo" }
+                ]
+            },
                 {
-                    category: "Bebidas",
-                    icon: "🥤",
-                    items: [
-                        { id: 21, name: "Coca-Cola Lata", description: "350ml", price: 6.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Coca" },
-                        { id: 22, name: "Guaraná Antártica Lata", description: "350ml", price: 5.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Guaraná" },
-                        { id: 23, name: "Água Mineral", description: "500ml", price: 3.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Água" },
-                        { id: 24, name: "Suco de Laranja Natural", description: "300ml", price: 8.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Suco" }
-                    ]
-                },
-                {
-                    category: "Pizzas",
-                    icon: "🍕",
-                    items: [
-                        { id: 31, name: "Pizza Calabresa (P)", description: "Molho, mussarela, calabresa, cebola", price: 35.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pizza+Calabresa" },
-                        { id: 32, name: "Pizza Frango c/ Catupiry (P)", description: "Molho, mussarela, frango desfiado, catupiry", price: 38.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pizza+Frango" },
-                        { id: 33, name: "Pizza Muçarela (P)", description: "Molho, mussarela, orégano", price: 30.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Pizza+Muçarela" }
-                    ]
-                }
+                category: "Bebidas",
+                icon: "🥤",
+                items: [
+                    { id: 21, name: "Coca-Cola Lata", description: "350ml", price: 6.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Coca" },
+                    { id: 22, name: "Guaraná Antártica Lata", description: "350ml", price: 5.50, image: "https://placehold.co/100x100/fbbf24/422006?text=Guaraná" },
+                    { id: 23, name: "Água Mineral", description: "500ml", price: 3.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Água" },
+                    { id: 24, name: "Suco de Laranja Natural", description: "300ml", price: 8.00, image: "https://placehold.co/100x100/fbbf24/422006?text=Suco" }
+                ]
+            },
             ]
         };
 
